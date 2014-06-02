@@ -34,6 +34,7 @@ define("webodf/editor/widgets/toggleLists", [
         var ToggleLists = function (callback) {
             var self = this,
                 editorSession,
+                listController,
                 widget = {},
                 numberedList,
                 bulletedList;
@@ -73,10 +74,26 @@ define("webodf/editor/widgets/toggleLists", [
                 return widget;
             };
 
+            function updateToggleButtons(styleSummary) {
+                bulletedList.set("checked", styleSummary.isBulletedList, false);
+                numberedList.set("checked", styleSummary.isNumberedList, false);
+
+            }
+
             this.onToolDone = function () {
             };
 
             this.setEditorSession = function (session) {
+                if (editorSession) {
+                    listController.unsubscribe(gui.ListController.listStylingChanged, updateToggleButtons);
+                }
+
+                editorSession = session;
+
+                if (editorSession) {
+                    listController = editorSession.sessionController.getListController();
+                    listController.subscribe(gui.ListController.listStylingChanged, updateToggleButtons);
+                }
             };
 
             callback(widget);

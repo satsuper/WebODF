@@ -212,13 +212,25 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
     };
 
     /**
-     * Determine if the node is a text:list-item element.
+     * Determine if the node is a text:list element.
      * @param {?Node} e
      * @return {!boolean}
      */
-    this.isListItem = function (e) {
+    function isListElement(e) {
         var name = e && e.localName;
-        return name === "list-item" && e.namespaceURI === textns;
+        return name === "list" && e.namespaceURI === textns;
+    }
+
+    this.isListElement = isListElement;
+
+    /**
+     * Determine if the node is a text:list-item or text:list-header element.
+     * @param {?Node} e
+     * @return {!boolean}
+     */
+    this.isListItemOrListHeaderElement = function (e) {
+        var name = e && e.localName;
+        return (name === "list-item" || name === "list-header") && e.namespaceURI === textns;
     };
 
     /**

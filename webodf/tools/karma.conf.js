@@ -130,6 +130,8 @@ module.exports = function (config) {
             'lib/gui/ImageController.js',
             'lib/gui/ImageSelector.js',
             'lib/gui/InputMethodEditor.js',
+            'lib/gui/ListStyleSummary.js',
+            'lib/gui/ListController.js',
             'lib/gui/MetadataController.js',
             'lib/gui/PasteController.js',
             'lib/gui/ClosestXOffsetScanner.js',

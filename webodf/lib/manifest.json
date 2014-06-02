@@ -153,6 +153,14 @@
         "core.typedefs",
         "gui.VisualStepScanner"
     ],
+    "gui.ListController": [
+        "core.LazyProperty",
+        "gui.ListStyleSummary",
+        "ops.Session"
+    ],
+    "gui.ListStyleSummary": [
+        "odf.Formatting"
+    ],
     "gui.MetadataController": [
         "ops.Session"
     ],
@@ -204,6 +212,7 @@
         "gui.ImageController",
         "gui.ImageSelector",
         "gui.InputMethodEditor",
+        "gui.ListController",
         "gui.MetadataController",
         "gui.PasteController",
         "gui.SelectionController",
