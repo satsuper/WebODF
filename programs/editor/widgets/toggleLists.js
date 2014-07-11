@@ -45,7 +45,13 @@ define("webodf/editor/widgets/toggleLists", [
                 showLabel: false,
                 checked: false,
                 iconClass: "dijitEditorIcon dijitEditorIconInsertOrderedList",
-                onChange: function () {
+                onChange: function (checked) {
+                    var success = listController.setNumberedList(checked);
+                    //TODO: remove this when the list controller supports all use cases triggered by this button
+                    if(!success) {
+                        numberedList.set("checked", !checked, false);
+                    }
+                    self.onToolDone();
                 }
             });
 
@@ -55,7 +61,13 @@ define("webodf/editor/widgets/toggleLists", [
                 showLabel: false,
                 checked: false,
                 iconClass: "dijitEditorIcon dijitEditorIconInsertUnorderedList",
-                onChange: function () {
+                onChange: function (checked) {
+                    var success = listController.setBulletedList(checked);
+                    //TODO: remove this when the list controller supports all use cases triggered by this button
+                    if(!success) {
+                        bulletedList.set("checked", !checked, false);
+                    }
+                    self.onToolDone();
                 }
             });
 

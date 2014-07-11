@@ -22,7 +22,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, ops, gui, odf, runtime*/
+/*global core, ops, gui, odf, NodeFilter, runtime*/
 
 /**
  * @implements {core.Destroyable}
@@ -36,6 +36,7 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
     "use strict";
     var odtDocument = session.getOdtDocument(),
         odfUtils = odf.OdfUtils,
+        domUtils = core.DomUtils,
         eventNotifier = new core.EventNotifier([
             gui.ListController.listStylingChanged,
             gui.ListController.enabledChanged
@@ -43,7 +44,9 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
         /**@type{!gui.ListController.SelectionInfo}*/
         lastSignalledSelectionInfo,
         /**@type{!core.LazyProperty.<!gui.ListController.SelectionInfo>}*/
-        cachedSelectionInfo;
+        cachedSelectionInfo,
+        /**@const*/
+        NEXT = core.StepDirection.NEXT;
 
     /**
      * @param {!ops.OdtCursor|!string} cursorOrId
@@ -137,6 +140,161 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
     }
 
     /**
+     * Find all top level text:list elements in the given range.
+     * This includes any elements that contain the start or end containers of the range.
+     * @param {!Range} range
+     * @return {!Array.<!Element>}
+     */
+    function getTopLevelListElementsInRange(range) {
+        var elements,
+            topLevelList,
+            rootNode = odtDocument.getRootNode();
+
+        /**
+         * @param {!Node} node
+         * @return {!number}
+         */
+        function isListOrListItem(node) {
+            var result = NodeFilter.FILTER_REJECT;
+            if (odfUtils.isListElement(node) && !odfUtils.isListItemOrListHeaderElement(node.parentNode)) {
+                result = NodeFilter.FILTER_ACCEPT;
+            } else if (odfUtils.isTextContentContainingNode(node) || odfUtils.isGroupingElement(node)) {
+                result = NodeFilter.FILTER_SKIP;
+            }
+            return result;
+        }
+
+        // ignore the list element if it is nested within another list
+        elements = domUtils.getNodesInRange(range, isListOrListItem, NodeFilter.SHOW_ELEMENT);
+
+        // add any top level lists that contain the start or end containers of the range
+        // check in the elements collection for duplicates in case these top level lists intersected the specified range
+        topLevelList = odfUtils.getTopLevelListElement(/**@type{!Node}*/(range.startContainer), rootNode);
+        if (topLevelList && topLevelList !== elements[0]) {
+            elements.unshift(topLevelList);
+        }
+
+        topLevelList = odfUtils.getTopLevelListElement(/**@type{!Node}*/(range.endContainer), rootNode);
+        if (topLevelList && topLevelList !== elements[elements.length - 1]) {
+            elements.push(topLevelList);
+        }
+
+        return elements;
+    }
+
+    /**
+     * @param {!Element} initialParagraph
+     * @return {!{startParagraph: !Element, endParagraph: !Element}}
+     */
+    function createParagraphGroup(initialParagraph) {
+        return {
+            startParagraph: initialParagraph,
+            endParagraph: initialParagraph
+        };
+    }
+
+    /**
+     * Takes all the paragraph elements in the current selection and breaks
+     * them into add list operations based on their common ancestors. Paragraph elements
+     * with the same common ancestor will be grouped into the same operation
+     * @return {!Array.<!ops.Operation>}
+     */
+    function determineOpsForAddingLists() {
+        var paragraphElements,
+            /**@type{!Array.<!{startParagraph: !Element, endParagraph: !Element}>}*/
+            paragraphGroups = [],
+            paragraphParent,
+            commonAncestor,
+            i;
+
+        paragraphElements = odfUtils.getParagraphElements(odtDocument.getCursor(inputMemberId).getSelectedRange());
+
+        for (i = 0; i < paragraphElements.length; i += 1) {
+            paragraphParent = paragraphElements[i].parentNode;
+
+            //TODO: handle selections that intersect with existing lists
+            if (odfUtils.isListItemOrListHeaderElement(paragraphParent)) {
+                runtime.log("DEBUG: Current selection intersects with an existing list which is not supported at this time");
+                paragraphGroups.length = 0;
+                break;
+            }
+
+            if (paragraphParent === commonAncestor) {
+                // if the current paragraph has the same common ancestor as the current group of paragraphs
+                // then the paragraph group gets extended to include the current paragraph
+                paragraphGroups[paragraphGroups.length - 1].endParagraph = paragraphElements[i];
+            } else {
+                // if the ancestor of this paragraph does not match then begin a new group of paragraphs
+                commonAncestor = paragraphParent;
+                paragraphGroups.push(createParagraphGroup(paragraphElements[i]));
+            }
+        }
+
+        // each paragraph group becomes one add list operation
+        return paragraphGroups.map(function (group) {
+            // take the first step of the start and end paragraph of each group and
+            // pass them in as the coordinates for the add list operation
+            var newOp = new ops.OpAddList();
+            newOp.init({
+                memberid: inputMemberId,
+                startParagraphPosition: odtDocument.convertDomPointToCursorStep(group.startParagraph, 0, NEXT),
+                endParagraphPosition: odtDocument.convertDomPointToCursorStep(group.endParagraph, 0, NEXT)
+            });
+            return newOp;
+        });
+    }
+
+    /**
+     * Finds all the lists to be removed in the current selection and creates an operation for each
+     * top level list element found
+     * @return {!Array.<!ops.Operation>}
+     */
+    function determineOpsForRemovingLists() {
+        var topLevelListElements,
+            stepIterator = odtDocument.createStepIterator(
+                odtDocument.getRootNode(),
+                0,
+                [odtDocument.getPositionFilter()],
+                odtDocument.getRootNode());
+
+        topLevelListElements = getTopLevelListElementsInRange(odtDocument.getCursor(inputMemberId).getSelectedRange());
+
+        return topLevelListElements.map(function (listElement) {
+            var newOp = new ops.OpRemoveList();
+
+            stepIterator.setPosition(listElement, 0);
+            runtime.assert(stepIterator.roundToNextStep(), "Top level list element contains no steps");
+
+            newOp.init({
+                memberid: inputMemberId,
+                firstParagraphPosition: odtDocument.convertDomPointToCursorStep(stepIterator.container(), stepIterator.offset())
+            });
+            return newOp;
+        });
+    }
+
+    /**
+     * @param {function():!Array.<!ops.Operation>} executeFunc
+     * @return {!boolean}
+     */
+    function executeListOperations(executeFunc) {
+        var newOps;
+
+        if (!cachedSelectionInfo.value().isEnabled) {
+            return false;
+        }
+
+        newOps = executeFunc();
+
+        if (newOps.length > 0) {
+            session.enqueue(newOps);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * @return {!boolean}
      */
     this.isEnabled = function () {
@@ -159,6 +317,47 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
      */
     this.unsubscribe = function (eventid, cb) {
         eventNotifier.unsubscribe(eventid, cb);
+    };
+
+    /**
+     * @return {!boolean}
+     */
+    function makeList() {
+        return executeListOperations(determineOpsForAddingLists);
+    }
+
+    this.makeList = makeList;
+
+    /**
+     * @return {!boolean}
+     */
+    function removeList() {
+        return executeListOperations(determineOpsForRemovingLists);
+    }
+
+    this.removeList = removeList;
+
+    /**
+     * @param {!boolean} checked
+     * @return {!boolean}
+     */
+    this.setNumberedList = function (checked) {
+        if (checked) {
+            return makeList();
+        }
+        return removeList();
+
+    };
+
+    /**
+     * @param {!boolean} checked
+     * @return {!boolean}
+     */
+    this.setBulletedList = function (checked) {
+        if (checked) {
+            return makeList();
+        }
+        return removeList();
     };
 
     /**

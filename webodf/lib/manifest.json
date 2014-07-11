@@ -415,6 +415,9 @@
     "ops.OpAddCursor": [
         "ops.OdtDocument"
     ],
+    "ops.OpAddList": [
+        "ops.OdtDocument"
+    ],
     "ops.OpAddMember": [
         "ops.OdtDocument"
     ],
@@ -456,6 +459,9 @@
     "ops.OpRemoveHyperlink": [
         "ops.OdtDocument"
     ],
+    "ops.OpRemoveList": [
+        "ops.OdtDocument"
+    ],
     "ops.OpRemoveMember": [
         "ops.OdtDocument"
     ],
@@ -490,6 +496,7 @@
     "ops.OperationFactory": [
         "ops.OpAddAnnotation",
         "ops.OpAddCursor",
+        "ops.OpAddList",
         "ops.OpAddMember",
         "ops.OpAddStyle",
         "ops.OpApplyDirectStyling",
@@ -503,6 +510,7 @@
         "ops.OpRemoveBlob",
         "ops.OpRemoveCursor",
         "ops.OpRemoveHyperlink",
+        "ops.OpRemoveList",
         "ops.OpRemoveMember",
         "ops.OpRemoveStyle",
         "ops.OpRemoveText",

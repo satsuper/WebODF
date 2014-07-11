@@ -1066,6 +1066,30 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         return fontFamilyName;
     };
     /*jslint regexp: false*/
+
+    /**
+     * Finds the top level text:list element for a given node
+     * @param {!Node} node
+     * @param {!Element} container Root container to stop searching at.
+     * @return {?Element}
+     */
+    this.getTopLevelListElement = function(node, container) {
+        var currentNode = node,
+            listNode = null;
+
+        while(currentNode) {
+            if(isListElement(currentNode)) {
+                listNode = /**@type{!Element}*/(currentNode);
+            }
+
+            if(currentNode === container) {
+                break;
+            }
+            currentNode = currentNode.parentNode;
+        }
+
+        return listNode;
+    };
 };
 
 /**
