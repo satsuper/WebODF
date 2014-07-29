@@ -525,12 +525,14 @@
         "ops.OperationFactory"
     ],
     "ops.OperationTransformMatrix": [
+        "ops.OpAddList",
         "ops.OpAddStyle",
         "ops.OpApplyDirectStyling",
         "ops.OpInsertText",
         "ops.OpMergeParagraph",
         "ops.OpMoveCursor",
         "ops.OpRemoveCursor",
+        "ops.OpRemoveList",
         "ops.OpRemoveStyle",
         "ops.OpRemoveText",
         "ops.OpSetParagraphStyle",
