@@ -97,6 +97,9 @@
     ],
     "gui.CommonConstraints": [
     ],
+    "gui.DefaultStyles": [
+        "ops.OpAddListStyle"
+    ],
     "gui.DirectFormattingController": [
         "core.LazyProperty",
         "gui.CommonConstraints",
@@ -156,6 +159,7 @@
     "gui.ListController": [
         "core.LazyProperty",
         "gui.CommonConstraints",
+        "gui.DefaultStyles",
         "gui.ListStyleSummary",
         "gui.SessionConstraints",
         "gui.SessionContext"
@@ -418,6 +422,9 @@
     "ops.OpAddList": [
         "ops.OdtDocument"
     ],
+    "ops.OpAddListStyle": [
+        "ops.OdtDocument"
+    ],
     "ops.OpAddMember": [
         "ops.OdtDocument"
     ],
@@ -497,6 +504,7 @@
         "ops.OpAddAnnotation",
         "ops.OpAddCursor",
         "ops.OpAddList",
+        "ops.OpAddListStyle",
         "ops.OpAddMember",
         "ops.OpAddStyle",
         "ops.OpApplyDirectStyling",
@@ -526,6 +534,7 @@
     ],
     "ops.OperationTransformMatrix": [
         "ops.OpAddList",
+        "ops.OpAddListStyle",
         "ops.OpAddStyle",
         "ops.OpApplyDirectStyling",
         "ops.OpInsertText",

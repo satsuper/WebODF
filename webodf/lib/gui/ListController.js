@@ -46,7 +46,11 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
         /**@type{!core.LazyProperty.<!gui.ListController.SelectionInfo>}*/
         cachedSelectionInfo,
         /**@const*/
-        NEXT = core.StepDirection.NEXT;
+        NEXT = core.StepDirection.NEXT,
+        /**@const*/
+        DEFAULT_NUMBERING_STYLE = "WebODF-Numbering",
+        /**@const*/
+        DEFAULT_BULLETED_STYLE = "WebODF-Bulleted";
 
     /**
      * @param {!ops.OdtCursor|!string} cursorOrId
@@ -194,12 +198,37 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
     }
 
     /**
+     * @param {!string} styleName
+     * @return {!ops.OpAddListStyle}
+     */
+    function createDefaultListStyleOp(styleName) {
+        var op = new ops.OpAddListStyle(),
+            defaultListStyle;
+
+        if (styleName === DEFAULT_NUMBERING_STYLE) {
+            defaultListStyle = gui.DefaultNumberedListStyle;
+        } else {
+            defaultListStyle = gui.DefaultBulletedListStyle;
+        }
+
+        op.init({
+            memberid: inputMemberId,
+            styleName: styleName,
+            isAutomaticStyle: true,
+            listStyle: defaultListStyle
+        });
+
+        return op;
+    }
+
+    /**
      * Takes all the paragraph elements in the current selection and breaks
      * them into add list operations based on their common ancestors. Paragraph elements
      * with the same common ancestor will be grouped into the same operation
+     * @param {!string=} styleName
      * @return {!Array.<!ops.Operation>}
      */
-    function determineOpsForAddingLists() {
+    function determineOpsForAddingLists(styleName) {
         var paragraphElements,
             /**@type{!Array.<!{startParagraph: !Element, endParagraph: !Element}>}*/
             paragraphGroups = [],
@@ -213,6 +242,7 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
             paragraphParent = paragraphElements[i].parentNode;
 
             //TODO: handle selections that intersect with existing lists
+            // This also needs to handle converting a list between numbering or bullets which MUST preserve the list structure
             if (odfUtils.isListItemOrListHeaderElement(paragraphParent)) {
                 runtime.log("DEBUG: Current selection intersects with an existing list which is not supported at this time");
                 paragraphGroups.length = 0;
@@ -238,7 +268,8 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
             newOp.init({
                 memberid: inputMemberId,
                 startParagraphPosition: odtDocument.convertDomPointToCursorStep(group.startParagraph, 0, NEXT),
-                endParagraphPosition: odtDocument.convertDomPointToCursorStep(group.endParagraph, 0, NEXT)
+                endParagraphPosition: odtDocument.convertDomPointToCursorStep(group.endParagraph, 0, NEXT),
+                styleName: styleName
             });
             return newOp;
         });
@@ -320,13 +351,39 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
     };
 
     /**
+     * @param {!string=} styleName
      * @return {!boolean}
      */
-    function makeList() {
-        return executeListOperations(determineOpsForAddingLists);
-    }
+    function makeList(styleName) {
+        var /**@type{!boolean}*/
+            isExistingStyle,
+            /**@type{!boolean}*/
+            isDefaultStyle;
 
-    this.makeList = makeList;
+        // check if the style name passed in exists in the document or is a WebODF default numbered or bulleted style.
+        // If no style name is passed in then the created list will have a style applied as described here:
+        // http://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part1.html#__RefHeading__1419242_253892949
+        if (styleName) {
+            isExistingStyle = Boolean(odtDocument.getFormatting().getStyleElement(styleName, "list-style"));
+            isDefaultStyle = styleName === DEFAULT_NUMBERING_STYLE || styleName === DEFAULT_BULLETED_STYLE;
+
+            // if the style doesn't exist in the document and isn't a WebODF default style then we can't continue
+            if (!isExistingStyle && !isDefaultStyle) {
+                runtime.log("DEBUG: Could not create a list with the style name: " + styleName + " as it does not exist in the document");
+                return false;
+            }
+        }
+
+        return executeListOperations(function () {
+            var newOps = determineOpsForAddingLists(styleName);
+
+            // this will only create an add list style op for WebODF default styles and only when they don't exist already
+            if (newOps.length > 0 && isDefaultStyle && !isExistingStyle) {
+                newOps.unshift(createDefaultListStyleOp(/**@type{!string}*/(styleName)));
+            }
+            return newOps;
+        });
+    }
 
     /**
      * @return {!boolean}
@@ -343,7 +400,7 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
      */
     this.setNumberedList = function (checked) {
         if (checked) {
-            return makeList();
+            return makeList(DEFAULT_NUMBERING_STYLE);
         }
         return removeList();
 
@@ -355,7 +412,7 @@ gui.ListController = function ListController(session, sessionConstraints, sessio
      */
     this.setBulletedList = function (checked) {
         if (checked) {
-            return makeList();
+            return makeList(DEFAULT_BULLETED_STYLE);
         }
         return removeList();
     };

@@ -442,6 +442,22 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
+     * @param {!ops.OpAddListStyle.Spec} addListStyleSpecA
+     * @param {!ops.OpAddListStyle.Spec} addListStyleSpecB
+     */
+    function transformAddListStyleAddListStyle(addListStyleSpecA, addListStyleSpecB) {
+        //TODO: handle list style conflicts
+        if(addListStyleSpecA.styleName === addListStyleSpecB.styleName) {
+            return null;
+        }
+
+        return {
+            opSpecsA: [addListStyleSpecA],
+            opSpecsB: [addListStyleSpecB]
+        };
+    }
+
+    /**
      * @param {!ops.OpAddStyle.Spec} addStyleSpec
      * @param {!ops.OpRemoveStyle.Spec} removeStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
@@ -1748,6 +1764,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         "AddCursor": {
             "AddCursor":            passUnchanged,
             "AddList":              passUnchanged,
+            "AddListStyle":         passUnchanged,
             "AddMember":            passUnchanged,
             "AddStyle":             passUnchanged,
             "ApplyDirectStyling":   passUnchanged,
@@ -1767,6 +1784,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         },
         "AddList": {
             "AddList":              transformAddListAddList,
+            "AddListStyle":         passUnchanged,
             "AddMember":            passUnchanged,
             "AddStyle":             passUnchanged,
             "ApplyDirectStyling":   passUnchanged,
@@ -1780,6 +1798,25 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             "RemoveText":           transformAddListRemoveText,
             "SetParagraphStyle":    passUnchanged,
             "SplitParagraph":       transformAddListSplitParagraph,
+            "UpdateMember":         passUnchanged,
+            "UpdateMetadata":       passUnchanged,
+            "UpdateParagraphStyle": passUnchanged
+        },
+        "AddListStyle": {
+            "AddListStyle":         transformAddListStyleAddListStyle,
+            "AddMember":            passUnchanged,
+            "AddStyle":             passUnchanged,
+            "ApplyDirectStyling":   passUnchanged,
+            "InsertText":           passUnchanged,
+            "MergeParagraph":       passUnchanged,
+            "MoveCursor":           passUnchanged,
+            "RemoveCursor":         passUnchanged,
+            "RemoveList":           passUnchanged,
+            "RemoveMember":         passUnchanged,
+            "RemoveStyle":          passUnchanged,
+            "RemoveText":           passUnchanged,
+            "SetParagraphStyle":    passUnchanged,
+            "SplitParagraph":       passUnchanged,
             "UpdateMember":         passUnchanged,
             "UpdateMetadata":       passUnchanged,
             "UpdateParagraphStyle": passUnchanged

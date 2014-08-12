@@ -106,6 +106,10 @@ ops.OperationTests = function OperationTests(runner) {
             if (/(length|position)/i.test(att.localName)) {
                 value = parseInt(value, 10);
             }
+            // find boolean values
+            if (/^(is|moveCursor)/.test(att.localName)) {
+                value = JSON.parse(value);
+            }
             op[att.nodeName] = value;
         }
         // read complex data by childs
