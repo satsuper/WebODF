@@ -174,7 +174,7 @@ define("webodf/editor/Tools", [
                 paragraphAlignment = createTool(ParagraphAlignment, args.directParagraphStylingEnabled);
 
                 // Numbered and bulleted list toggle buttons
-                toggleLists = createTool(ToggleLists, true);
+                toggleLists = createTool(ToggleLists, args.listEditingEnabled);
 
                 // Paragraph Style Selector
                 currentStyle = createTool(CurrentStyle, args.paragraphStyleSelectingEnabled);

@@ -74,6 +74,12 @@ define("webodf/editor/widgets/toggleLists", [
                 return widget;
             };
 
+            function enableToggleButtons(isEnabled) {
+                widget.children.forEach(function (element) {
+                    element.setAttribute('disabled', !isEnabled);
+                });
+            }
+
             function updateToggleButtons(styleSummary) {
                 bulletedList.set("checked", styleSummary.isBulletedList, false);
                 numberedList.set("checked", styleSummary.isNumberedList, false);
@@ -86,6 +92,7 @@ define("webodf/editor/widgets/toggleLists", [
             this.setEditorSession = function (session) {
                 if (editorSession) {
                     listController.unsubscribe(gui.ListController.listStylingChanged, updateToggleButtons);
+                    listController.unsubscribe(gui.ListController.enabledChanged, enableToggleButtons);
                 }
 
                 editorSession = session;
@@ -93,6 +100,10 @@ define("webodf/editor/widgets/toggleLists", [
                 if (editorSession) {
                     listController = editorSession.sessionController.getListController();
                     listController.subscribe(gui.ListController.listStylingChanged, updateToggleButtons);
+                    listController.subscribe(gui.ListController.enabledChanged, enableToggleButtons);
+                    enableToggleButtons(listController.isEnabled());
+                } else {
+                    enableToggleButtons(false);
                 }
             };
 

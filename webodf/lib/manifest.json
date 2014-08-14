@@ -155,8 +155,10 @@
     ],
     "gui.ListController": [
         "core.LazyProperty",
+        "gui.CommonConstraints",
         "gui.ListStyleSummary",
-        "ops.Session"
+        "gui.SessionConstraints",
+        "gui.SessionContext"
     ],
     "gui.ListStyleSummary": [
         "odf.Formatting"

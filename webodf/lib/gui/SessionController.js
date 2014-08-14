@@ -90,7 +90,7 @@ gui.SessionControllerOptions = function () {
             createParagraphStyleOps = /**@type {function (!number):!Array.<!ops.Operation>}*/ (directFormattingController.createParagraphStyleOps),
             textController = new gui.TextController(session, sessionConstraints, sessionContext, inputMemberId, createCursorStyleOp, createParagraphStyleOps),
             imageController = new gui.ImageController(session, sessionConstraints, sessionContext, inputMemberId, objectNameGenerator),
-            listController = new gui.ListController(session, inputMemberId),
+            listController = new gui.ListController(session, sessionConstraints, sessionContext, inputMemberId),
             imageSelector = new gui.ImageSelector(odtDocument.getOdfCanvas()),
             shadowCursorIterator = odtDocument.createPositionIterator(odtDocument.getRootNode()),
             /**@type{!core.ScheduledTask}*/

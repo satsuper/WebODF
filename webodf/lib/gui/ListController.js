@@ -27,19 +27,22 @@
 /**
  * @implements {core.Destroyable}
  * @param {!ops.Session} session
+ * @param {!gui.SessionConstraints} sessionConstraints
+ * @param {!gui.SessionContext} sessionContext
  * @param {!string} inputMemberId
  * @constructor
  */
-gui.ListController = function ListController(session, inputMemberId) {
+gui.ListController = function ListController(session, sessionConstraints, sessionContext, inputMemberId) {
     "use strict";
     var odtDocument = session.getOdtDocument(),
         odfUtils = odf.OdfUtils,
         eventNotifier = new core.EventNotifier([
-            gui.ListController.listStylingChanged
+            gui.ListController.listStylingChanged,
+            gui.ListController.enabledChanged
         ]),
-        /**@type{!gui.ListStyleSummary}*/
+        /**@type{!gui.ListController.SelectionInfo}*/
         lastSignalledSelectionInfo,
-        /**@type{!core.LazyProperty.<!gui.ListStyleSummary>}*/
+        /**@type{!core.LazyProperty.<!gui.ListController.SelectionInfo>}*/
         cachedSelectionInfo;
 
     /**
@@ -79,32 +82,66 @@ gui.ListController = function ListController(session, inputMemberId) {
     }
 
     /**
-     * @return {!gui.ListStyleSummary}
+     * @return {!gui.ListController.SelectionInfo}
      */
     function getSelectionInfo() {
         var cursor = odtDocument.getCursor(inputMemberId),
-            cursorNode = cursor && cursor.getNode();
+            cursorNode = cursor && cursor.getNode(),
+            styleSummary = new gui.ListStyleSummary(cursorNode, odtDocument.getRootNode(), odtDocument.getFormatting()),
+            isEnabled = true;
 
-        return new gui.ListStyleSummary(cursorNode, odtDocument.getRootNode(), odtDocument.getFormatting());
+        if (sessionConstraints.getState(gui.CommonConstraints.EDIT.REVIEW_MODE) === true) {
+            isEnabled = sessionContext.isLocalCursorWithinOwnAnnotation();
+        }
+
+        return new gui.ListController.SelectionInfo(isEnabled, styleSummary);
     }
 
     /**
      * @return {undefined}
      */
     function emitSelectionChanges() {
-        var hasChanged = true,
-            newStyleSummary = cachedSelectionInfo.value();
+        var hasStyleChanged = true,
+            hasEnabledChanged = true,
+            newSelectionInfo = cachedSelectionInfo.value(),
+            lastStyleSummary,
+            newStyleSummary;
 
         if (lastSignalledSelectionInfo) {
-            hasChanged = lastSignalledSelectionInfo.isNumberedList !== newStyleSummary.isNumberedList ||
-                lastSignalledSelectionInfo.isBulletedList !== newStyleSummary.isBulletedList;
+            lastStyleSummary = lastSignalledSelectionInfo.styleSummary;
+            newStyleSummary = newSelectionInfo.styleSummary;
+
+            hasStyleChanged = lastStyleSummary.isNumberedList !== newStyleSummary.isNumberedList ||
+                lastStyleSummary.isBulletedList !== newStyleSummary.isBulletedList;
+
+            hasEnabledChanged = lastSignalledSelectionInfo.isEnabled !== newSelectionInfo.isEnabled;
         }
 
-        if (hasChanged) {
-            lastSignalledSelectionInfo = newStyleSummary;
-            eventNotifier.emit(gui.ListController.listStylingChanged, lastSignalledSelectionInfo);
+        lastSignalledSelectionInfo = newSelectionInfo;
+
+        if (hasStyleChanged) {
+            eventNotifier.emit(gui.ListController.listStylingChanged, lastSignalledSelectionInfo.styleSummary);
+        }
+
+        if (hasEnabledChanged) {
+            eventNotifier.emit(gui.ListController.enabledChanged, lastSignalledSelectionInfo.isEnabled);
         }
     }
+
+    /**
+     * @return {undefined}
+     */
+    function forceSelectionInfoRefresh() {
+        cachedSelectionInfo.reset();
+        emitSelectionChanges();
+    }
+
+    /**
+     * @return {!boolean}
+     */
+    this.isEnabled = function () {
+        return cachedSelectionInfo.value().isEnabled;
+    };
 
     /**
      * @param {!string} eventid
@@ -135,6 +172,7 @@ gui.ListController = function ListController(session, inputMemberId) {
         odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
         odtDocument.unsubscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
         odtDocument.unsubscribe(ops.OdtDocument.signalProcessingBatchEnd, emitSelectionChanges);
+        sessionConstraints.unsubscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, forceSelectionInfoRefresh);
         callback();
     };
 
@@ -148,6 +186,7 @@ gui.ListController = function ListController(session, inputMemberId) {
         odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
         odtDocument.subscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
         odtDocument.subscribe(ops.OdtDocument.signalProcessingBatchEnd, emitSelectionChanges);
+        sessionConstraints.subscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, forceSelectionInfoRefresh);
 
         cachedSelectionInfo = new core.LazyProperty(getSelectionInfo);
     }
@@ -157,3 +196,30 @@ gui.ListController = function ListController(session, inputMemberId) {
 
 /**@const*/
 gui.ListController.listStylingChanged = "listStyling/changed";
+
+/**@const*/
+gui.ListController.enabledChanged = "enabled/changed";
+
+/**
+ * @param {!boolean} isEnabled
+ * @param {!gui.ListStyleSummary} styleSummary
+ * @constructor
+ * @struct
+ */
+gui.ListController.SelectionInfo = function (isEnabled, styleSummary) {
+    "use strict";
+
+    /**
+     * Whether the controller is enabled based on the selection
+     * @type {!boolean}
+     */
+    this.isEnabled = isEnabled;
+
+    /**
+     * Summary of list style information for the selection
+     * @type {!gui.ListStyleSummary}
+     */
+    this.styleSummary = styleSummary;
+};
+
+
