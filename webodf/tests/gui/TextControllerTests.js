@@ -34,51 +34,8 @@ gui.TextControllerTests = function TextControllerTests(runner) {
     var r = runner,
         t,
         testarea,
-        officens = odf.Namespaces.officens,
         utils = new core.Utils(),
         inputMemberId = "Joe";
-
-    /**
-     * Trying to avoid having to load a complete document for these tests. Mocking ODF
-     * canvas allows some simplification in the testing setup
-     * @param {Element} node
-     * @extends {odf.OdfCanvas} Well.... we don't really, but please shut your face closure compiler :)
-     * @constructor
-     */
-    /*jslint emptyblock:true*/
-    function MockOdfCanvas(node) {
-        var self = this;
-        this.odfContainer = function () { return self; };
-        this.getContentElement = function () { return node.getElementsByTagNameNS(officens, 'text')[0]; };
-        this.getElement = function () { return node; };
-        this.rootElement = node;
-        this.refreshSize = function() { };
-        this.rerenderAnnotations = function() { };
-    }
-    /*jslint emptyblock:false*/
-
-    /**
-     * @param {!ops.OdtDocument} odtDocument
-     * @extends {ops.Session} Don't mind me... I'm just lying to closure compiler again!
-     * @constructor
-     */
-    function MockSession(odtDocument) {
-        var self = this;
-        this.operations = [];
-
-        this.getOdtDocument = function() {
-            return odtDocument;
-        };
-
-        this.enqueue = function(ops) {
-            self.operations.push.apply(self.operations, ops);
-            ops.forEach(function(op) { op.execute(odtDocument); });
-        };
-
-        this.reset = function() {
-            self.operations.length = 0;
-        };
-    }
 
     /*jslint unparam:true*/
     /**
@@ -114,12 +71,12 @@ gui.TextControllerTests = function TextControllerTests(runner) {
             range;
 
         xml = xml.replace("[", "<test:start/>").replace("]", "<test:end/>");
-        doc = core.UnitTest.createOdtDocument("<office:text>" + xml + "</office:text>", namespaceMap);
+        doc = core.UnitTest.createOdtDocument("<office:body><office:text>" + xml + "</office:text></office:body>", namespaceMap);
         node = /**@type{!Element}*/(domDocument.importNode(doc.documentElement, true));
         testarea.appendChild(node);
 
-        t.odtDocument = new ops.OdtDocument(new MockOdfCanvas(node));
-        t.session = new MockSession(t.odtDocument);
+        t.odtDocument = new ops.OdtDocument(new gui.MockOdfCanvas(testarea));
+        t.session = new gui.MockSession(t.odtDocument);
         t.sessionConstraints = new gui.SessionConstraints();
         t.sessionContext = new gui.SessionContext(t.session, inputMemberId);
         t.textController = new gui.TextController(t.session, t.sessionConstraints, t.sessionContext, inputMemberId, directStyleOp, paragraphStyleOps);

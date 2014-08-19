@@ -40,58 +40,20 @@ gui.SelectionControllerTests = function SelectionControllerTests(runner) {
         inputMemberId = "Joe";
 
     /**
-     * Trying to avoid having to load a complete document for these tests. Mocking ODF
-     * canvas allows some simplification in the testing setup
-     * @param {Element} node
-     * @extends {odf.OdfCanvas} Well.... we don't really, but please shut your face closure compiler :)
-     * @constructor
-     */
-    function MockOdfCanvas(node) {
-        var self = this;
-        this.odfContainer = function () { return self; };
-        this.getContentElement = function () { return node.getElementsByTagNameNS(odf.Namespaces.officens, 'text')[0]; };
-        this.getElement = function () { return node; };
-        this.rootElement = node;
-    }
-
-    /**
-     * @param {!ops.OdtDocument} odtDocument
-     * @extends {ops.Session} Don't mind me... I'm just lying to closure compiler again!
-     * @constructor
-     */
-    function MockSession(odtDocument) {
-        var self = this;
-        this.operations = [];
-
-        this.getOdtDocument = function() {
-            return odtDocument;
-        };
-
-        this.enqueue = function(ops) {
-            self.operations.push.apply(self.operations, ops);
-            ops.forEach(function(op) { op.execute(odtDocument); });
-        };
-
-        this.reset = function() {
-            self.operations.length = 0;
-        };
-    }
-
-    /**
      * Create a new ODT document with the specified text body
      * @param {!string} xml
      * @return {!Element} Root document node
      */
     function createOdtDocument(xml) {
         var domDocument = testarea.ownerDocument,
-            doc = core.UnitTest.createOdtDocument("<office:text>" + xml + "</office:text>", odf.Namespaces.namespaceMap),
+            doc = core.UnitTest.createOdtDocument("<office:body><office:text>" + xml + "</office:text></office:body>", odf.Namespaces.namespaceMap),
             node = /**@type{!Element}*/(domDocument.importNode(doc.documentElement, true));
 
         testarea.appendChild(node);
 
         t.root = node;
-        t.odtDocument = new ops.OdtDocument(new MockOdfCanvas(node));
-        t.session = new MockSession(t.odtDocument);
+        t.odtDocument = new ops.OdtDocument(new gui.MockOdfCanvas(testarea));
+        t.session = new gui.MockSession(t.odtDocument);
         t.selectionController = new gui.SelectionController(t.session, inputMemberId);
         t.selectionToRange = t.selectionController.selectionToRange;
         t.rangeToSelection = t.selectionController.rangeToSelection;

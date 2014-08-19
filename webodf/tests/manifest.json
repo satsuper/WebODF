@@ -29,22 +29,29 @@
         "core.UnitTester",
         "core.Zip"
     ],
+    "gui.ControllerTestUtils": [
+        "odf.OdfCanvas",
+        "odf.OdfContainer",
+        "ops.Member",
+        "ops.OdtDocument",
+        "ops.OpAddMember",
+        "ops.Operation",
+        "ops.OperationFactory",
+        "ops.Session"
+    ],
     "gui.DirectFormattingControllerTests": [
         "core.DomUtils",
         "core.UnitTester",
         "core.Utils",
+        "gui.ControllerTestUtils",
         "gui.DirectFormattingController",
         "gui.SessionConstraints",
         "gui.SessionContext",
-        "odf.Formatting",
         "odf.Namespaces",
         "odf.ObjectNameGenerator",
-        "odf.OdfCanvas",
-        "odf.OdfContainer",
         "ops.Document",
         "ops.OdtCursor",
-        "ops.OdtDocument",
-        "ops.Session"
+        "ops.OdtDocument"
     ],
     "gui.GuiStepUtilsTests": [
         "core.PositionFilter",
@@ -57,29 +64,22 @@
     ],
     "gui.MetadataControllerTests": [
         "core.UnitTester",
+        "gui.ControllerTestUtils",
         "gui.MetadataController",
         "odf.Namespaces",
-        "odf.OdfCanvas",
-        "odf.OdfContainer",
         "odf.OdfNodeFilter",
-        "ops.Member",
         "ops.OdtDocument",
-        "ops.OpAddMember",
-        "ops.Operation",
-        "ops.OperationFactory",
-        "ops.Session",
         "xmldom.LSSerializer"
     ],
     "gui.SelectionControllerTests": [
         "core.DomUtils",
         "core.LoopWatchDog",
         "core.UnitTester",
+        "gui.ControllerTestUtils",
         "gui.SelectionController",
         "odf.Namespaces",
-        "odf.OdfCanvas",
         "ops.OdtCursor",
-        "ops.OdtDocument",
-        "ops.Session"
+        "ops.OdtDocument"
     ],
     "gui.StyleSummaryTests": [
         "core.UnitTester",
@@ -89,16 +89,15 @@
     "gui.TextControllerTests": [
         "core.UnitTester",
         "core.Utils",
+        "gui.ControllerTestUtils",
         "gui.SessionConstraints",
         "gui.SessionContext",
         "gui.TextController",
         "odf.Namespaces",
-        "odf.OdfCanvas",
         "odf.OdfNodeFilter",
         "ops.OdtCursor",
         "ops.OdtDocument",
         "ops.Operation",
-        "ops.Session",
         "xmldom.LSSerializer"
     ],
     "gui.TrivialUndoManagerTests": [

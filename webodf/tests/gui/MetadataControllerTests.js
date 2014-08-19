@@ -35,76 +35,7 @@ gui.MetadataControllerTests = function MetadataControllerTests(runner) {
         t,
         testarea,
         internalMetadataTagnames = ["dc:creator", "dc:date", "meta:editing-cycles"],
-        officens = odf.Namespaces.officens,
         inputMemberId = "Joe";
-
-    /**
-     * Trying to avoid having to load a complete document for these tests. Mocking ODF
-     * canvas allows some simplification in the testing setup
-     * @param {!Element} node
-     * @extends {odf.OdfCanvas} Well.... we don't really, but please shut your face closure compiler :)
-     * @constructor
-     */
-    /*jslint emptyblock:true*/
-    function MockOdfCanvas(node) {
-        var odfContainer;
-
-        this.odfContainer = function() {return odfContainer; };
-        this.getContentElement = function () { return node.getElementsByTagNameNS(officens, 'text')[0]; };
-        this.getElement = function () { return node; };
-        this.rootElement = node;
-        this.refreshSize = function() { };
-        this.rerenderAnnotations = function() { };
-
-        // init
-        odfContainer = new odf.OdfContainer(odf.OdfContainer.DocumentType.TEXT);
-        odfContainer.setRootElement(node);
-    }
-    /*jslint emptyblock:false*/
-
-    /**
-     * @param {!ops.OdtDocument} odtDocument
-     * @extends {ops.Session} Don't mind me... I'm just lying to closure compiler again!
-     * @constructor
-     */
-    function MockSession(odtDocument) {
-        var self = this,
-            /**@type{!ops.OperationFactory}*/
-            operationFactory = new ops.OperationFactory();
-
-        this.getOdtDocument = function() {
-            return odtDocument;
-        };
-
-        this.enqueue = function(operations) {
-            operations.forEach(function(op) {
-                var /**@type{?ops.Operation}*/
-                    timedOp,
-                    opspec = op.spec();
-
-                // need to set the timestamp, otherwise things fail in odtDocument
-                opspec.timestamp = Date.now();
-                timedOp = operationFactory.create(opspec);
-                if (timedOp.execute(odtDocument)) {
-                    odtDocument.emit(ops.OdtDocument.signalOperationEnd, timedOp);
-                }
-            });
-        };
-
-        function init() {
-            var op = new ops.OpAddMember();
-            op.init({
-                memberid: inputMemberId,
-                setProperties: /**@type {!ops.MemberProperties}*/({
-                    fullName: "Metha",
-                    color: "black",
-                    imageUrl: "avatar-joe.png"
-                })
-            });
-            self.enqueue([op]);
-        }
-        init();
-    }
 
     /**
      * @param {!gui.MetadataController} metadataController
@@ -145,8 +76,8 @@ gui.MetadataControllerTests = function MetadataControllerTests(runner) {
         node = /**@type{!Element}*/(domDocument.importNode(doc.documentElement, true));
         testarea.appendChild(node);
 
-        t.odtDocument = new ops.OdtDocument(new MockOdfCanvas(node));
-        t.session = new MockSession(t.odtDocument);
+        t.odtDocument = new ops.OdtDocument(new gui.MockOdfCanvas(testarea));
+        t.session = new gui.MockSession(t.odtDocument);
         t.metadataController = new gui.MetadataController(t.session, inputMemberId);
         t.metadataChangeListener = new MetadataChangeListener(t.metadataController);
 

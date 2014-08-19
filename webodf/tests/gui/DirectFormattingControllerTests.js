@@ -34,68 +34,9 @@ gui.DirectFormattingControllerTests = function DirectFormattingControllerTests(r
     var r = runner,
         t,
         testarea,
-        officens = odf.Namespaces.officens,
         utils = new core.Utils(),
         domUtils = new core.DomUtils(),
         inputMemberId = "Joe";
-
-    /**
-     * @constructor
-     * @extends {odf.OdfContainer}
-     * @param {!Element} node
-     */
-    function MockOdfContainer(node) {
-        // OdfContainer maps the following properties onto the rootElement
-        node.styles = node.getElementsByTagNameNS(odf.Namespaces.officens, "styles")[0];
-        node.automaticStyles = node.getElementsByTagNameNS(odf.Namespaces.officens, "automatic-styles")[0];
-        this.rootElement = /**@type{!odf.ODFDocumentElement}*/(node);
-        this.getContentElement = function () { return node.getElementsByTagNameNS(officens, 'text')[0]; };
-    }
-
-    /**
-     * Trying to avoid having to load a complete document for these tests. Mocking ODF
-     * canvas allows some simplification in the testing setup
-     * @constructor
-     * @extends {odf.OdfCanvas} Well.... we don't really, but please shut your face closure compiler :)
-     * @param {!Element} node
-     */
-    /*jslint emptyblock:true*/
-    function MockOdfCanvas(node) {
-        var container = new MockOdfContainer(node),
-            formatting = new odf.Formatting();
-
-        formatting.setOdfContainer(container);
-
-        this.getFormatting = function() { return formatting; };
-        this.odfContainer = function () { return container; };
-        this.getElement = function () { return node; };
-        this.refreshSize = function() { };
-        this.rerenderAnnotations = function() { };
-    }
-    /*jslint emptyblock:false*/
-
-    /**
-     * @param {!ops.OdtDocument} odtDocument
-     * @extends {ops.Session} Don't mind me... I'm just lying to closure compiler again!
-     * @constructor
-     */
-    function MockSession(odtDocument) {
-        var self = this;
-        this.operations = [];
-
-        this.getOdtDocument = function() {
-            return odtDocument;
-        };
-
-        this.enqueue = function(ops) {
-            self.operations.push.apply(self.operations, ops);
-            ops.forEach(function(op) { op.execute(odtDocument); });
-        };
-
-        this.reset = function() {
-            self.operations.length = 0;
-        };
-    }
 
     /**
      * Create a new ODT document with the specified text body
@@ -115,13 +56,13 @@ gui.DirectFormattingControllerTests = function DirectFormattingControllerTests(r
         xml = xml.replace("[", "<test:start/>").replace("]", "<test:end/>");
         doc = core.UnitTest.createOdtDocument("<office:styles>" + styles + "</office:styles>" +
                                                 "<office:automatic-styles></office:automatic-styles>" +
-                                                "<office:text>" + xml + "</office:text>", namespaceMap);
+                                                "<office:body><office:text>" + xml + "</office:text></office:body>", namespaceMap);
         node = /**@type{!Element}*/(domDocument.importNode(doc.documentElement, true));
         testarea.appendChild(node);
 
-        mock = new MockOdfCanvas(node);
+        mock = new gui.MockOdfCanvas(testarea);
         t.odtDocument = new ops.OdtDocument(mock);
-        t.session = new MockSession(t.odtDocument);
+        t.session = new gui.MockSession(t.odtDocument);
         t.sessionConstraints = new gui.SessionConstraints();
         t.sessionContext = new gui.SessionContext(t.session, inputMemberId);
         t.formattingController = new gui.DirectFormattingController(t.session, t.sessionConstraints, t.sessionContext,
