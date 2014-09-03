@@ -2409,4 +2409,66 @@
    </office:text>
   </after>
  </test>
+ <test name="MergeList_Simple">
+  <before>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>SampleText1</text:p>
+     </text:list-item>
+    </text:list>
+    <text:list>
+     <text:list-item>
+      <text:p>SampleText2</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="MergeList" destinationStartPosition="0" sourceStartPosition="12"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>SampleText1</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>SampleText2</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="SplitList_Simple">
+  <before>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>SampleText1</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>SampleText2</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="SplitList" sourceStartPosition="0" splitPosition="12"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>SampleText1</text:p>
+     </text:list-item>
+    </text:list>
+    <text:list>
+     <text:list-item>
+      <text:p>SampleText2</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
 </tests>

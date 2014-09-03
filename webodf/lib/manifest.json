@@ -447,6 +447,9 @@
     "ops.OpInsertText": [
         "ops.OdtDocument"
     ],
+    "ops.OpMergeList": [
+        "ops.OdtDocument"
+    ],
     "ops.OpMergeParagraph": [
         "odf.CollapsingRules",
         "ops.OdtDocument"
@@ -485,6 +488,10 @@
     "ops.OpSetParagraphStyle": [
         "ops.OdtDocument"
     ],
+    "ops.OpSplitList": [
+        "odf.CollapsingRules",
+        "ops.OdtDocument"
+    ],
     "ops.OpSplitParagraph": [
         "ops.OdtDocument"
     ],
@@ -512,6 +519,7 @@
         "ops.OpInsertImage",
         "ops.OpInsertTable",
         "ops.OpInsertText",
+        "ops.OpMergeList",
         "ops.OpMergeParagraph",
         "ops.OpMoveCursor",
         "ops.OpRemoveAnnotation",
@@ -524,6 +532,7 @@
         "ops.OpRemoveText",
         "ops.OpSetBlob",
         "ops.OpSetParagraphStyle",
+        "ops.OpSplitList",
         "ops.OpSplitParagraph",
         "ops.OpUpdateMember",
         "ops.OpUpdateMetadata",

@@ -103,7 +103,9 @@ ops.OperationFactory = function OperationFactory() {
             RemoveHyperlink: construct(ops.OpRemoveHyperlink),
             AddList: construct(ops.OpAddList),
             RemoveList: construct(ops.OpRemoveList),
-            AddListStyle: construct(ops.OpAddListStyle)
+            AddListStyle: construct(ops.OpAddListStyle),
+            MergeList: construct(ops.OpMergeList),
+            SplitList: construct(ops.OpSplitList)
         };
     }
 
